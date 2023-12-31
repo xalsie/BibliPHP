@@ -5,11 +5,13 @@ namespace App;
 class BibliothequeManager
 {
     private $bibliotheque = [];
+    private $file = 'bibli.json';
 
     // Constructeur de la classe
     public function __construct()
     {
-        $this->genererLivresAleatoires(100);
+        // $this->genererLivresAleatoires(100);
+        $this->loadFile();
     }
 
     // Méthode pour générer des livres aléatoires
@@ -28,6 +30,8 @@ class BibliothequeManager
             $disponibleAleatoire = (bool)rand(0, 1);
             $this->ajouterLivre($noms[$i], $descriptions[$i], $disponibleAleatoire);
         }
+
+        $this->saveFile();
     }
 
     // Méthode pour ajouter un livre
@@ -41,6 +45,7 @@ class BibliothequeManager
         $livre = ['id' => $id, 'nom' => $nom, 'description' => $description, 'disponible' => $disponible];
         $this->bibliotheque[] = $livre;
         echo "Livre ajouté avec succès!\n   - UID = $id\n";
+        $this->saveFile();
     }
 
     // Méthode pour afficher la liste des livres
@@ -87,6 +92,8 @@ class BibliothequeManager
             $this->bibliotheque[$index] = $livre;
 
             echo "Livre modifié avec succès!\n";
+
+            $this->saveFile();
         } else {
             echo "Livre non trouvé.\n";
         }
@@ -116,6 +123,8 @@ class BibliothequeManager
 
         // Réorganiser les indices du tableau
         $this->bibliotheque = array_values($this->bibliotheque);
+
+        $this->saveFile();
     }
 
     // Méthode pour afficher les données d'un seul livre
@@ -133,7 +142,6 @@ class BibliothequeManager
             echo "Livre non trouvé.\n";
         }
     }
-
 
     // Méthode pour trier les livres
     public function trierLivres($colonne, $ordre = 'asc')
@@ -201,18 +209,6 @@ class BibliothequeManager
     }
 
     // Fonction pour comparer deux livres en fonction de la colonne spécifiée
-    // private function compareLivres($colonne, $ordre, $livre1, $livre2)
-    // {
-    //     $valeur1 = $livre1[$colonne];
-    //     $valeur2 = $livre2[$colonne];
-
-    //     if ($ordre === 'asc') {
-    //         return $valeur1 <= $valeur2;
-    //     } else {
-    //         return $valeur1 >= $valeur2;
-    //     }
-    // }
-
     private function compareLivres($colonne, $ordre, $livre1, $livre2)
     {
         $valeur1 = $livre1[$colonne];
@@ -224,8 +220,6 @@ class BibliothequeManager
             return $ordre === 'asc' ? $valeur1 <= $valeur2 : $valeur1 >= $valeur2;
         }
     }
-
-
 
     // Méthode pour rechercher un livre dans une colonne spécifique
     public function rechercherLivre($colonne, $valeur)
@@ -274,6 +268,37 @@ class BibliothequeManager
         return false;
     }
 
+    // BONUS
+
+    // Méthode pour sauvegarder la bibliothèque dans un fichier JSON
+    public function saveFile($file = null)
+    {
+        if ($file === null) {
+            $file = $this->file;
+        }
+
+        $json = json_encode($this->bibliotheque, JSON_PRETTY_PRINT);
+        file_put_contents($file, $json);
+        echo "La bibliothèque a été sauvegardée dans le fichier $file.\n";
+    }
+
+    // Méthode pour charger la bibliothèque depuis un fichier JSON
+    public function loadFile($file = null)
+    {
+        if ($file === null) {
+            $file = $this->file;
+        }
+        if (file_exists($file)) {
+            $json = file_get_contents($file);
+            $this->bibliotheque = json_decode($json, true);
+            echo "La bibliothèque a été chargée depuis le fichier $file.\n";
+        } else {
+            echo "Le fichier $file n'existe pas. Une nouvelle bibliothèque vide a été créée.\n";
+        }
+    }
+
+    
+
 
     // Méthode pour afficher le menu
     public function afficherMenu()
@@ -286,7 +311,9 @@ class BibliothequeManager
         echo "5. Afficher un Livre\n";
         echo "6. Trier les Livres\n";
         echo "7. Rechercher un Livre\n";
-        echo "8. Quitter\n";
+        echo "8. Sauvegarder la bibliothèque dans un fichier JSON\n";
+        echo "9. Générer des livres aléatoires\n";
+        echo "10. Quitter\n";
     }
 
     // Méthode pour exécuter le programme
@@ -294,7 +321,7 @@ class BibliothequeManager
     {
         do {
             $this->afficherMenu();
-            echo "Choisissez une option (1-8): ";
+            echo "Choisissez une option (1-10): ";
             $choix = trim(fgets(STDIN));
 
             switch ($choix) {
@@ -337,6 +364,15 @@ class BibliothequeManager
                     $this->rechercherLivre($colonne, $valeur);
                     break;
                 case 8:
+                    // Sauvegarder la bibliothèque dans un fichier JSON
+                    $this->saveFile();
+                    break;
+                case 9:
+                    // Générer des livres aléatoires
+                    $nombreLivres = readline("Entrez le nombre de livres à générer: ");
+                    $this->genererLivresAleatoires($nombreLivres);
+                    break;
+                case 10:
                     // quitter
                     // echo "  - Au revoir!\n";
                     exit();
